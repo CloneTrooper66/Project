@@ -2,6 +2,7 @@ const {
   getAllTopics,
   articleById,
   getAllArticles,
+  getAllComments,
 } = require("../models/app.model");
 const fs = require("fs");
 const path = require("path");
@@ -44,4 +45,13 @@ exports.getApi = (req, res) => {
   const endpointsFilePath = path.join(__dirname, "..", "endpoints.json");
   const endpointsData = JSON.parse(fs.readFileSync(endpointsFilePath, "utf8"));
   res.status(200).send(endpointsData);
+};
+
+exports.getCommentsByID = (req, res, next) => {
+  getAllComments(req.params.article_id).then((result) => {
+    if (result === 0) {
+      res.status(404).send({ msg: "Invalid article ID" });
+    }
+    res.status(200).send(result);
+  });
 };

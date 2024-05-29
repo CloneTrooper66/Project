@@ -3,6 +3,7 @@ const {
   getTopic,
   getArticleByID,
   getArticle,
+  getCommentsByID,
 } = require("./controllers/app.controller");
 const { getApi } = require("./controllers/app.controller");
 const app = express();
@@ -14,6 +15,8 @@ app.get("/api", getApi);
 app.get("/api/articles/:article_id", getArticleByID);
 
 app.get("/api/articles", getArticle);
+
+app.get("/api/articles/:article_id/comments", getCommentsByID);
 
 app.use((req, res, next) => {
   res.status(404).send({ msg: "PATH NOT FOUND" });
