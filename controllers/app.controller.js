@@ -1,4 +1,8 @@
-const { getAllTopics, articleById } = require("../models/app.model");
+const {
+  getAllTopics,
+  articleById,
+  getAllArticles,
+} = require("../models/app.model");
 const fs = require("fs");
 const path = require("path");
 
@@ -22,8 +26,18 @@ exports.getArticleByID = (req, res, next) => {
       res.status(200).send(result);
     });
   } else {
-    res.status(400).send({ msg: "Invalid article ID" });
+    res.status(404).send({ msg: "Invalid article ID" });
   }
+};
+
+exports.getArticle = (req, res, next) => {
+  getAllArticles()
+    .then((result) => {
+      res.status(200).send(result);
+    })
+    .catch((err) => {
+      next(err);
+    });
 };
 
 exports.getApi = (req, res) => {
