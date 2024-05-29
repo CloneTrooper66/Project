@@ -6,6 +6,7 @@ const request = require("supertest");
 const fs = require("fs");
 const path = require("path");
 const sorted = require("jest-sorted");
+const { create } = require("domain");
 afterAll(() => {
   return db.end();
 });
@@ -118,6 +119,36 @@ describe("GET /api/articles", () => {
       .expect(404)
       .then(({ body }) => {
         expect(body.msg).toBe("PATH NOT FOUND");
+      });
+  });
+});
+
+describe("GET /api/articles/:article_id/comments", () => {
+  test("GET:200 Responds with an array of comments for the given article_id of which each comment should have the following properties", () => {
+    return request(app)
+      .get("/api/articles/5/comments")
+      .expect(200)
+      .then(({ body }) => {
+        expect(body.length).toBe(2);
+        expect(body).toBeSortedBy("created_at", { descending: true });
+        body.forEach((comment) => {
+          expect(comment).toMatchObject({
+            comment_id: expect.any(Number),
+            votes: expect.any(Number),
+            created_at: expect.any(String),
+            author: expect.any(String),
+            body: expect.any(String),
+            article_id: expect.any(Number),
+          });
+        });
+      });
+  });
+  test("GET:404 Responds with a 404 error message when article_id does not match any existing article_id in the database ", () => {
+    return request(app)
+      .get("/api/articles/2325/comments")
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Invalid article ID");
       });
   });
 });
