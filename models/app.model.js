@@ -1,4 +1,5 @@
 const db = require("../db/connection");
+
 exports.getAllTopics = () => {
   let queryStr = "SELECT * FROM topics";
 

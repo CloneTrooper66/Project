@@ -3,6 +3,8 @@ const db = require("../db/connection");
 const seed = require("../db/seeds/seed");
 const app = require("../app");
 const request = require("supertest");
+const fs = require("fs");
+const path = require("path");
 
 afterAll(() => {
   return db.end();
@@ -33,6 +35,21 @@ describe("GET /api/topics", () => {
       .expect(404)
       .then(({ body }) => {
         expect(body.msg).toBe("PATH NOT FOUND");
+      });
+  });
+});
+
+describe("GET /api", () => {
+  test("GET:200 Responds with An object describing all the available endpoints on your API", () => {
+    const endpointsFilePath = path.join(__dirname, "..", "endpoints.json");
+    const endpointsData = JSON.parse(
+      fs.readFileSync(endpointsFilePath, "utf8")
+    );
+    return request(app)
+      .get("/api")
+      .expect(200)
+      .then(({ body }) => {
+        expect(body).toEqual(endpointsData);
       });
   });
 });
