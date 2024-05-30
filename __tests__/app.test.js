@@ -203,3 +203,49 @@ describe("POST /api/articles/:article_id/comments", () => {
       });
   });
 });
+
+describe("PATCH /api/articles/:article_id", () => {
+  test("PATCH:200 should update article votes", () => {
+    const vote = { inc_votes: 1 };
+    return request(app)
+      .patch("/api/articles/3")
+      .send(vote)
+      .expect(200)
+      .then((result) => {
+        expect(result.body).toMatchObject({
+          body: expect.any(String),
+          article_id: 3,
+          author: expect.any(String),
+          votes: 1,
+          created_at: expect.any(String),
+        });
+      });
+  });
+
+  test("PATCH:200 should decrement article votes", () => {
+    const vote = { inc_votes: -8 };
+    return request(app)
+      .patch("/api/articles/4")
+      .send(vote)
+      .expect(200)
+      .then((result) => {
+        expect(result.body).toMatchObject({
+          body: expect.any(String),
+          article_id: 4,
+          author: expect.any(String),
+          votes: -8,
+          created_at: expect.any(String),
+        });
+      });
+  });
+  test("PATCH:400 Responds with a 400 error massage when inc_votes value is not a Number", () => {
+    const vote = { inc_votes: "seven" };
+    return request(app)
+      .patch("/api/articles/4")
+      .send(vote)
+      .expect(400)
+      .then(({ body }) => {
+        expect(body.msg).toBe("inc_votes must be an integer");
+      });
+  });
+});

@@ -4,6 +4,7 @@ const {
   getAllArticles,
   getAllComments,
   insertComment,
+  updateVote,
 } = require("../models/app.model");
 const fs = require("fs");
 const path = require("path");
@@ -69,5 +70,16 @@ exports.postComment = (req, res, next) => {
   }
   insertComment(article_id, username, body).then((result) => {
     res.status(201).send(result);
+  });
+};
+
+exports.patchVote = (req, res, next) => {
+  const { article_id } = req.params;
+  const { inc_votes } = req.body;
+  if (typeof inc_votes !== "number") {
+    return res.status(400).send({ msg: "inc_votes must be an integer" });
+  }
+  updateVote(article_id, inc_votes).then((result) => {
+    res.status(200).send(result);
   });
 };
