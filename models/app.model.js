@@ -1,5 +1,9 @@
 const db = require("../db/connection");
 
+function isValidArticleId(articleId) {
+  return !isNaN(parseInt(articleId));
+}
+
 exports.getAllTopics = () => {
   let queryStr = "SELECT * FROM topics";
 
@@ -28,7 +32,7 @@ exports.articleById = (articleId) => {
 
   return db.query(query, [articleId]).then((result) => {
     if (result.rowCount === 0) {
-      return result.rowCount;
+      return Promise.reject({ status: 404, msg: "Article not found" });
     }
     return result.rows[0];
   });
@@ -77,12 +81,16 @@ exports.getAllComments = (articleId) => {
         ORDER BY 
             created_at DESC;
     `;
-  return db.query(query, [articleId]).then((result) => {
-    if (result.rowCount === 0) {
-      return result.rowCount;
-    }
-    return result.rows;
-  });
+  if (isValidArticleId(articleId)) {
+    return db.query(query, [articleId]).then((result) => {
+      if (result.rowCount === 0) {
+        return Promise.reject({ status: 404, msg: "Invalid article ID" });
+      }
+      return result.rows;
+    });
+  } else {
+    return Promise.reject({ status: 404, msg: "article_id must be a number" });
+  }
 };
 
 exports.insertComment = (article_id, username, body) => {
@@ -91,10 +99,14 @@ exports.insertComment = (article_id, username, body) => {
     VALUES ($1, $2, $3)
     RETURNING *;
   `;
-  const values = [body, article_id, username];
-  return db.query(query, values).then((result) => {
-    return result.rows[0];
-  });
+  if (isValidArticleId(article_id)) {
+    const values = [body, article_id, username];
+    return db.query(query, values).then((result) => {
+      return result.rows[0];
+    });
+  } else {
+    return Promise.reject({ status: 404, msg: "article_id must be a number" });
+  }
 };
 
 exports.updateVote = (article_id, vote) => {
@@ -104,8 +116,32 @@ SET votes = votes + $1
 WHERE article_id = $2
 RETURNING *;
 `;
-  const values = [vote, article_id];
-  return db.query(queryText, values).then((result) => {
-    return result.rows[0];
-  });
+  if (isValidArticleId(article_id)) {
+    if (typeof vote !== "number") {
+      return Promise.reject({ status: 404, msg: "inc_votes must be a number" });
+    }
+    const values = [vote, article_id];
+    return db.query(queryText, values).then((result) => {
+      if (result.rowCount === 0) {
+        return Promise.reject({ status: 404, msg: "Invalid article ID" });
+      }
+      return result.rows[0];
+    });
+  } else {
+    return Promise.reject({ status: 404, msg: "article_id must be a number" });
+  }
+};
+
+exports.deleteCommentById = (comment_id) => {
+  const queryText = ` DELETE FROM comments WHERE comment_id = $1; `;
+  if (isValidArticleId(comment_id)) {
+    const values = [comment_id];
+    return db.query(queryText, values).then((result) => {
+      if (result.rowCount === 0) {
+        return Promise.reject({ status: 404, msg: "Invalid comment_id" });
+      }
+    });
+  } else {
+    return Promise.reject({ status: 404, msg: "comment_id must be a number" });
+  }
 };

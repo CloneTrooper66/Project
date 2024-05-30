@@ -6,8 +6,6 @@ const request = require("supertest");
 const fs = require("fs");
 const path = require("path");
 const sorted = require("jest-sorted");
-const { create } = require("domain");
-const comments = require("../db/data/test-data/comments");
 afterAll(() => {
   return db.end();
 });
@@ -139,7 +137,7 @@ describe("GET /api/articles/:article_id/comments", () => {
             created_at: expect.any(String),
             author: expect.any(String),
             body: expect.any(String),
-            article_id: expect.any(Number),
+            article_id: 5,
           });
         });
       });
@@ -150,6 +148,14 @@ describe("GET /api/articles/:article_id/comments", () => {
       .expect(404)
       .then(({ body }) => {
         expect(body.msg).toBe("Invalid article ID");
+      });
+  });
+  test("GET:404 Responds with a 404 error message when article_id is not a number", () => {
+    return request(app)
+      .get("/api/articles/ten/comments")
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe("article_id must be a number");
       });
   });
 });
@@ -202,6 +208,19 @@ describe("POST /api/articles/:article_id/comments", () => {
         expect(body.msg).toBe("Please Enter Valid Strings");
       });
   });
+  test("GET:404 Responds with a 404 error message when article_id is not a number", () => {
+    const newComment = {
+      username: "butter_bridge",
+      body: 23,
+    };
+    return request(app)
+      .post("/api/articles/zz/comments")
+      .send(newComment)
+      .expect(400)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Please Enter Valid Strings");
+      });
+  });
 });
 
 describe("PATCH /api/articles/:article_id", () => {
@@ -238,14 +257,61 @@ describe("PATCH /api/articles/:article_id", () => {
         });
       });
   });
-  test("PATCH:400 Responds with a 400 error massage when inc_votes value is not a Number", () => {
+  test("PATCH:404 Responds with a 404 error massage when inc_votes value is not a Number", () => {
     const vote = { inc_votes: "seven" };
     return request(app)
       .patch("/api/articles/4")
       .send(vote)
-      .expect(400)
+      .expect(404)
       .then(({ body }) => {
-        expect(body.msg).toBe("inc_votes must be an integer");
+        expect(body.msg).toBe("inc_votes must be a number");
+      });
+  });
+  test("PATCH:404 Responds with a 404 error massage when article_id  is not a Number", () => {
+    const vote = { inc_votes: "seven" };
+    return request(app)
+      .patch("/api/articles/one")
+      .send(vote)
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe("article_id must be a number");
+      });
+  });
+  test("Patch:404 Responds with a 404 error message when article_id does not match any existing article_id in the database ", () => {
+    const vote = { inc_votes: 4 };
+    return request(app)
+      .patch("/api/articles/42323")
+      .send(vote)
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Invalid article ID");
+      });
+  });
+});
+
+describe("DELETE:200  /api/comments/:comment_id", () => {
+  test("DELETE:204 should delete the given comment by comment_id", () => {
+    return request(app)
+      .delete("/api/comments/1")
+      .expect(204)
+      .then((result) => {
+        expect(result.body).toEqual({});
+      });
+  });
+  test("DELETE:404 Responds with a 404 error massage when comment_id  is not a Number", () => {
+    return request(app)
+      .delete("/api/comments/seven")
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe("comment_id must be a number");
+      });
+  });
+  test("DELETE:404 Responds with a 404 error message when comment_id does not match any existing comment_id in the database", () => {
+    return request(app)
+      .delete("/api/comments/1222")
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Invalid comment_id");
       });
   });
 });
