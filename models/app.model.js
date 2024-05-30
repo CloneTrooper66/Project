@@ -145,3 +145,10 @@ exports.deleteCommentById = (comment_id) => {
     return Promise.reject({ status: 404, msg: "comment_id must be a number" });
   }
 };
+
+exports.getAllUsers = () => {
+  let query = "SELECT username, name, avatar_url FROM users";
+  return db.query(query).then((result) => {
+    return result.rows;
+  });
+};
