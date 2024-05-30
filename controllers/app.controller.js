@@ -3,6 +3,7 @@ const {
   articleById,
   getAllArticles,
   getAllComments,
+  insertComment,
 } = require("../models/app.model");
 const fs = require("fs");
 const path = require("path");
@@ -53,5 +54,20 @@ exports.getCommentsByID = (req, res, next) => {
       res.status(404).send({ msg: "Invalid article ID" });
     }
     res.status(200).send(result);
+  });
+};
+
+exports.postComment = (req, res, next) => {
+  const { article_id } = req.params;
+  const { username, body } = req.body;
+
+  if (!username || !body) {
+    return res.status(400).send({ msg: "Username and body are required" });
+  }
+  if (typeof username !== "string" || typeof body !== "string") {
+    return res.status(400).send({ msg: "Please Enter Valid Strings" });
+  }
+  insertComment(article_id, username, body).then((result) => {
+    res.status(201).send(result);
   });
 };

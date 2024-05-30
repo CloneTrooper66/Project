@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const sorted = require("jest-sorted");
 const { create } = require("domain");
+const comments = require("../db/data/test-data/comments");
 afterAll(() => {
   return db.end();
 });
@@ -149,6 +150,56 @@ describe("GET /api/articles/:article_id/comments", () => {
       .expect(404)
       .then(({ body }) => {
         expect(body.msg).toBe("Invalid article ID");
+      });
+  });
+});
+
+describe("POST /api/articles/:article_id/comments", () => {
+  test("POST:201 Responds with a newly created comment object", () => {
+    const newComment = {
+      username: "butter_bridge",
+      body: "This is a test comment",
+    };
+    return request(app)
+      .post("/api/articles/2/comments")
+      .send(newComment)
+      .expect(201)
+      .then((result) => {
+        expect(result.body).toMatchObject({
+          comment_id: expect.any(Number),
+          body: newComment.body,
+          article_id: 2,
+          author: newComment.username,
+          votes: 0,
+          created_at: expect.any(String),
+        });
+      });
+  });
+
+  test("POST 400: Responds with a 400 error message when body or username is missing", () => {
+    const newComment = {
+      username: "icellusedkars",
+    };
+    return request(app)
+      .post("/api/articles/2/comments")
+      .send(newComment)
+      .expect(400)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Username and body are required");
+      });
+  });
+
+  test("POST 400: Responds with a 400 error message when the body or username is not a string.", () => {
+    const newComment = {
+      username: "butter_bridge",
+      body: 23,
+    };
+    return request(app)
+      .post("/api/articles/2/comments")
+      .send(newComment)
+      .expect(400)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Please Enter Valid Strings");
       });
   });
 });

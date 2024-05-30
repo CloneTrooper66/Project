@@ -84,3 +84,15 @@ exports.getAllComments = (articleId) => {
     return result.rows;
   });
 };
+
+exports.insertComment = (article_id, username, body) => {
+  const query = `
+    INSERT INTO comments (body, article_id, author)
+    VALUES ($1, $2, $3)
+    RETURNING *;
+  `;
+  const values = [body, article_id, username];
+  return db.query(query, values).then((result) => {
+    return result.rows[0];
+  });
+};

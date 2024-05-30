@@ -39,5 +39,27 @@
       "votes": 0,
       "article_img_url": "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700"
     }
+  },
+  "POST /api/articles/:article_id/comments": {
+    "description": "adds a comment for an article",
+    "queries": [],
+    "requestBody": {
+      "username": "string",
+      "body": "string"
+    },
+    "exampleRequest": {
+      "username": "butter_bridge",
+      "body": "This is a test comment"
+    },
+    "exampleResponse": {
+      "comment": {
+        "comment_id": 2,
+        "article_id": 3,
+        "username": "butter_bridge",
+        "body": "This is a test comment",
+        "created_at": "DATE",
+        "votes": 0
+      }
+    }
   }
 }
