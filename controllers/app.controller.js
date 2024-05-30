@@ -6,6 +6,7 @@ const {
   insertComment,
   updateVote,
   deleteCommentById,
+  getAllUsers,
 } = require("../models/app.model");
 const fs = require("fs");
 const path = require("path");
@@ -96,6 +97,16 @@ exports.deleteComment = (req, res, next) => {
   deleteCommentById(comment_id)
     .then(() => {
       res.sendStatus(204);
+    })
+    .catch((err) => {
+      next(err);
+    });
+};
+
+exports.getUsers = (req, res, next) => {
+  getAllUsers()
+    .then((result) => {
+      res.status(200).send(result);
     })
     .catch((err) => {
       next(err);
