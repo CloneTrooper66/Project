@@ -96,3 +96,16 @@ exports.insertComment = (article_id, username, body) => {
     return result.rows[0];
   });
 };
+
+exports.updateVote = (article_id, vote) => {
+  const queryText = `
+UPDATE articles
+SET votes = votes + $1
+WHERE article_id = $2
+RETURNING *;
+`;
+  const values = [vote, article_id];
+  return db.query(queryText, values).then((result) => {
+    return result.rows[0];
+  });
+};
