@@ -15,31 +15,32 @@ exports.getAllTopics = () => {
 
 exports.articleById = (articleId) => {
   const query = `
-  SELECT
-    u.name AS author,
-    a.title,
-    a.article_id,
-    a.body,
-    t.slug AS topic,
-    a.created_at,
-    a.votes,
-    a.article_img_url
-  FROM articles a
-  LEFT JOIN users u ON a.author = u.username
-  LEFT JOIN topics t ON a.topic = t.slug
-  WHERE a.article_id = $1;
-`;
+    SELECT
+      u.name AS author,
+      a.title,
+      a.article_id,
+      a.body,
+      t.slug AS topic,
+      a.created_at,
+      a.votes,
+      a.article_img_url
+    FROM articles a
+    LEFT JOIN users u ON a.author = u.username
+    LEFT JOIN topics t ON a.topic = t.slug
+    WHERE a.article_id = $1;
+  `;
 
   return db.query(query, [articleId]).then((result) => {
     if (result.rowCount === 0) {
       return Promise.reject({ status: 404, msg: "Article not found" });
     }
+
     return result.rows[0];
   });
 };
 
-exports.getAllArticles = () => {
-  const query = `
+exports.getAllArticles = (topic) => {
+  let query = `
    SELECT 
       articles.author,
       articles.title,
@@ -55,12 +56,21 @@ exports.getAllArticles = () => {
       comments
     ON 
       articles.article_id = comments.article_id
+    `;
+
+  let queryParameter = [];
+  if (topic) {
+    query += `WHERE articles.topic = $1 `;
+    queryParameter.push(topic);
+  }
+
+  query += `
     GROUP BY 
       articles.article_id
     ORDER BY 
       articles.created_at DESC;`;
 
-  return db.query(query).then((result) => {
+  return db.query(query, queryParameter).then((result) => {
     return result.rows;
   });
 };
@@ -94,42 +104,60 @@ exports.getAllComments = (articleId) => {
 };
 
 exports.insertComment = (article_id, username, body) => {
-  const query = `
+  const queryText = `
+    SELECT * FROM articles
+    WHERE article_id = $1;
+  `;
+
+  return db.query(queryText, [article_id]).then((result) => {
+    if (result.rows.length === 0) {
+      return Promise.reject({ status: 404, msg: "Article not found" });
+    }
+    const query = `
     INSERT INTO comments (body, article_id, author)
     VALUES ($1, $2, $3)
     RETURNING *;
   `;
-  if (isValidArticleId(article_id)) {
-    const values = [body, article_id, username];
-    return db.query(query, values).then((result) => {
-      return result.rows[0];
-    });
-  } else {
-    return Promise.reject({ status: 404, msg: "article_id must be a number" });
-  }
+    if (isValidArticleId(article_id)) {
+      const values = [body, article_id, username];
+      return db.query(query, values).then((result) => {
+        return result.rows[0];
+      });
+    } else {
+      return Promise.reject({
+        status: 404,
+        msg: "article_id must be a number",
+      });
+    }
+  });
 };
 
 exports.updateVote = (article_id, vote) => {
-  const queryText = `
-UPDATE articles
-SET votes = votes + $1
-WHERE article_id = $2
-RETURNING *;
-`;
-  if (isValidArticleId(article_id)) {
-    if (typeof vote !== "number") {
-      return Promise.reject({ status: 404, msg: "inc_votes must be a number" });
-    }
-    const values = [vote, article_id];
-    return db.query(queryText, values).then((result) => {
-      if (result.rowCount === 0) {
-        return Promise.reject({ status: 404, msg: "Invalid article ID" });
-      }
-      return result.rows[0];
-    });
-  } else {
+  if (!isValidArticleId(article_id)) {
     return Promise.reject({ status: 404, msg: "article_id must be a number" });
   }
+
+  const queryText = `
+    SELECT * FROM articles
+    WHERE article_id = $1;
+  `;
+
+  return db.query(queryText, [article_id]).then((result) => {
+    if (result.rows.length === 0) {
+      return Promise.reject({ status: 404, msg: "Article not found" });
+    }
+    const updateQueryText = `
+        UPDATE articles
+        SET votes = votes + $1
+        WHERE article_id = $2
+        RETURNING *;
+      `;
+    const values = [vote, article_id];
+
+    return db.query(updateQueryText, values).then((result) => {
+      return result.rows[0];
+    });
+  });
 };
 
 exports.deleteCommentById = (comment_id) => {
