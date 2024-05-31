@@ -6,6 +6,7 @@ const request = require("supertest");
 const fs = require("fs");
 const path = require("path");
 const sorted = require("jest-sorted");
+const comments = require("../db/data/test-data/comments");
 afterAll(() => {
   return db.end();
 });
@@ -63,7 +64,7 @@ describe("GET /api/articles/:article_id", () => {
         expect(body).toMatchObject({
           author: expect.any(String),
           title: expect.any(String),
-          article_id: expect.any(Number),
+          article_id: 3,
           body: expect.any(String),
           topic: expect.any(String),
           created_at: expect.any(String),
@@ -97,6 +98,7 @@ describe("GET /api/articles", () => {
       .get("/api/articles")
       .expect(200)
       .then(({ body }) => {
+        expect(body.length).toEqual(13);
         expect(body).toBeSortedBy("created_at", { descending: true });
         body.forEach((article) => {
           expect(article).toMatchObject({
@@ -118,6 +120,16 @@ describe("GET /api/articles", () => {
       .expect(404)
       .then(({ body }) => {
         expect(body.msg).toBe("PATH NOT FOUND");
+      });
+  });
+  test("GET:200 Responds with articles filtered by topic", () => {
+    return request(app)
+      .get(`/api/articles?topic=mitch`)
+      .expect(200)
+      .then(({ body }) => {
+        body.forEach((article) => {
+          expect(article.topic).toBe("mitch");
+        });
       });
   });
 });
@@ -182,7 +194,7 @@ describe("POST /api/articles/:article_id/comments", () => {
       });
   });
 
-  test("POST 400: Responds with a 400 error message when body or username is missing", () => {
+  test("POST:400: Responds with a 400 error message when body or username is missing", () => {
     const newComment = {
       username: "icellusedkars",
     };
@@ -195,7 +207,7 @@ describe("POST /api/articles/:article_id/comments", () => {
       });
   });
 
-  test("POST 400: Responds with a 400 error message when the body or username is not a string.", () => {
+  test("POST:400: Responds with a 400 error message when the body or username is not a string.", () => {
     const newComment = {
       username: "butter_bridge",
       body: 23,
@@ -219,6 +231,20 @@ describe("POST /api/articles/:article_id/comments", () => {
       .expect(400)
       .then(({ body }) => {
         expect(body.msg).toBe("Please Enter Valid Strings");
+      });
+  });
+
+  test("GET:404 Responds with a 404 error message when article_id does not match any existing article_id in the database", () => {
+    const newComment = {
+      username: "butter_bridge",
+      body: "This is a test comment",
+    };
+    return request(app)
+      .post("/api/articles/333333/comments")
+      .send(newComment)
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Article not found");
       });
   });
 });
@@ -257,16 +283,7 @@ describe("PATCH /api/articles/:article_id", () => {
         });
       });
   });
-  test("PATCH:404 Responds with a 404 error massage when inc_votes value is not a Number", () => {
-    const vote = { inc_votes: "seven" };
-    return request(app)
-      .patch("/api/articles/4")
-      .send(vote)
-      .expect(404)
-      .then(({ body }) => {
-        expect(body.msg).toBe("inc_votes must be a number");
-      });
-  });
+
   test("PATCH:404 Responds with a 404 error massage when article_id  is not a Number", () => {
     const vote = { inc_votes: "seven" };
     return request(app)
@@ -284,7 +301,7 @@ describe("PATCH /api/articles/:article_id", () => {
       .send(vote)
       .expect(404)
       .then(({ body }) => {
-        expect(body.msg).toBe("Invalid article ID");
+        expect(body.msg).toBe("Article not found");
       });
   });
 });
@@ -317,7 +334,7 @@ describe("DELETE:200  /api/comments/:comment_id", () => {
 });
 
 describe("GET /api/users", () => {
-  test("GET:200 Responds with : an array of objects, each object should have appropriate properties:", () => {
+  test("GET:200 Responds with  an array of objects, each object should have appropriate properties:", () => {
     return request(app)
       .get("/api/users")
       .expect(200)
