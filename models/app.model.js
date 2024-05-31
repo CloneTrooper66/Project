@@ -23,7 +23,8 @@ exports.articleById = (articleId) => {
       t.slug AS topic,
       a.created_at,
       a.votes,
-      a.article_img_url
+      a.article_img_url,
+      (SELECT COUNT(*) FROM comments WHERE article_id = a.article_id) AS comment_count
     FROM articles a
     LEFT JOIN users u ON a.author = u.username
     LEFT JOIN topics t ON a.topic = t.slug
