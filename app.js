@@ -10,7 +10,10 @@ const {
   getUsers,
 } = require("./controllers/app.controller");
 const { getApi } = require("./controllers/app.controller");
+const cors = require("cors");
+
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 app.get("/api/topics", getTopic);
